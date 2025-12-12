@@ -1,0 +1,984 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jack and the Beanstalk — Sky Spiral Particles</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP",
+          "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+        color: #0b2239;
+      }
+      #ui {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        pointer-events: none;
+      }
+      .stack {
+        display: grid;
+        gap: 14px;
+      }
+      .card {
+        width: min(720px, calc(100vw - 32px));
+        background: rgba(255, 255, 255, 0.78);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 18px 55px rgba(0, 0, 0, 0.18);
+        border-radius: 18px;
+        padding: 22px 18px;
+        pointer-events: auto;
+      }
+      h1 {
+        font-size: 18px;
+        margin: 0 0 10px;
+        letter-spacing: 0.02em;
+      }
+      p {
+        margin: 10px 0;
+        line-height: 1.8;
+        font-size: 14px;
+      }
+      .meta {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 12px;
+        opacity: 0.9;
+      }
+      .meta-right {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      button {
+        appearance: none;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 999px;
+        padding: 10px 14px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      button:active {
+        transform: translateY(1px);
+      }
+      .hint {
+        font-size: 12px;
+      }
+      .sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      #p5-holder {
+        position: fixed;
+        inset: 0;
+      }
+      #ui-fab {
+        position: fixed;
+        right: 14px;
+        bottom: 14px;
+        z-index: 10;
+        pointer-events: auto;
+        border: 1px solid rgba(0, 0, 0, 0.18);
+        background: rgba(255, 255, 255, 0.82);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 16px 45px rgba(0, 0, 0, 0.16);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="p5-holder" aria-hidden="true"></div>
+    <button id="ui-fab" type="button">物語を閉じる</button>
+
+    <main id="ui">
+      <div class="stack">
+        <section class="card" id="card-prelude" role="dialog" aria-labelledby="title-prelude">
+          <h1 id="title-prelude">ジャックと豆の木（はじまり）</h1>
+          <p>
+            ジャックの家はとても貧しく、ある日とうとう、たった一頭の牛を売りに町へ出かけることになりました。
+          </p>
+          <p>
+            町のはずれで、見知らぬ男が声をかけます。<br />
+            「その牛と、この豆の木の“種”を交換しないか？ きっと空に届くほど育つぞ」
+          </p>
+          <p>
+            ジャックは迷いました。でも男の目は真剣で、手のひらの豆は不思議にあたたかく感じます。<br />
+            こうしてジャックは、牛と豆の種を交換して家へ急ぎました。
+          </p>
+          <div class="meta">
+            <span class="hint">背景は“町”をイメージした茶色い景色です。</span>
+            <span class="meta-right">
+              <button id="to-ending">つづきを見る</button>
+            </span>
+          </div>
+        </section>
+
+        <section class="card" id="card-ending" role="dialog" aria-labelledby="title-ending">
+          <h1 id="title-ending">ジャックと豆の木（エンディング）</h1>
+          <p>
+            帰宅したジャックは魔法の豆を手に入れたことを母親に伝えると、ひどく怒られて豆を窓の外へ投げ捨てられてしまいました。
+          </p>
+          <p>
+            すると、あくる朝、豆は巨大な木になっていました。
+          </p>
+          <div class="meta">
+            <span class="hint">背景は1本のらせん粒子が、ゆっくり上昇します。</span>
+            <span class="meta-right">
+              <button id="back">前の場面へ</button>
+              <button id="to-giant">豆の木を登る</button>
+              <button id="toggle">物語を閉じる</button>
+            </span>
+          </div>
+        </section>
+
+        <section class="card" id="card-giant" role="dialog" aria-labelledby="title-giant">
+          <h1 id="title-giant">雲の上の屋敷</h1>
+          <p>
+            ジャックは胸の鼓動をおさえながら、豆の木をぎゅっと握りしめて登っていきました。<br />
+            風が冷たくなり、雲が足元にふわりと触れたとき、目の前には空の上の世界が広がっていたのです。
+          </p>
+          <p>
+            雲の地面の向こうに、山のように大きな屋敷がそびえていました。——人食い巨人の住む屋敷です。<br />
+            そっと忍び込んだジャックは、屋敷の奥で、金の卵を産む雌鶏を見つけました。
+          </p>
+          <p>
+            そのとき、どしん、どしん……と床を揺らす足音。巨人が戻ってきたのです。<br />
+            ジャックは息をひそめ、見つかりそうになりながらも雌鶏を抱えて走り、豆の木をすべり降りるようにして逃げました。
+          </p>
+          <div class="meta">
+            <span class="hint">背景は雲の地面と、巨大な屋敷です。</span>
+            <span class="meta-right">
+              <button id="back2">ひとつ前へ</button>
+              <button id="to-harp">もう一度のぼる</button>
+              <button id="toggle2">物語を閉じる</button>
+            </span>
+          </div>
+        </section>
+
+        <section class="card" id="card-harp" role="dialog" aria-labelledby="title-harp">
+          <h1 id="title-harp">木の屋敷の奥で</h1>
+          <p>
+            味をしめたジャックは、もう一度だけと心に言い聞かせ、再び豆の木を登りました。<br />
+            雲の上の屋敷へ忍び込み、今度の狙いは——ひとりでに音楽をかなでる、魔法のハープ。
+          </p>
+          <p>
+            木の香りが濃い廊下を抜けると、部屋のあちこちにハーブが吊るされ、乾いた葉がかすかに揺れていました。<br />
+            その中央で、ハープは誰も触れていないのに、やさしい音色をぽろん、とこぼしたのです。
+          </p>
+          <p>
+            ジャックがそっと手を伸ばした瞬間、ハープが小さな声でしゃべりだしました。<br />
+            「だれ？ だれがいるの？」——その声に、奥の寝台がぎしりと鳴り、巨人のまぶたがゆっくり開いてしまいます。
+          </p>
+          <div class="meta">
+            <span class="hint">背景は木の家の中（ハーブと音楽の気配）です。</span>
+            <span class="meta-right">
+              <button id="back3">ひとつ前へ</button>
+              <button id="to-fall">急いで逃げる</button>
+              <button id="toggle3">物語を閉じる</button>
+            </span>
+          </div>
+        </section>
+
+        <section class="card" id="card-fall" role="dialog" aria-labelledby="title-fall">
+          <h1 id="title-fall">追跡と落下</h1>
+          <p>
+            捕まったら、食べられてしまう。そう思った瞬間、ジャックの足は勝手に動きました。<br />
+            きしむ階段を駆け下り、雲の縁へ飛び出し、豆の木にしがみついて地上へと一気に滑り降ります。
+          </p>
+          <p>
+            背後では、巨人の怒号が空を裂きました。どしん、どしん……豆の木が揺れるほどの足音。<br />
+            ジャックは地面に飛び降りると、息もつかず斧を握り、幹のような豆の木を力いっぱい切り始めました。
+          </p>
+          <p>
+            ぱきん、と大きな音がして、豆の木は傾きます。追いかけてきた巨人は足場を失い、雲から雲へと落ちていきました。<br />
+            そして最後は、遠くで重たい音がして——巨人は落ちて死んでしまったのです。
+          </p>
+          <div class="meta">
+            <span class="hint">背景は空を落ちていくようなイメージです。</span>
+            <span class="meta-right">
+              <button id="back4">ひとつ前へ</button>
+              <button id="to-happy">その後…</button>
+              <button id="toggle4">物語を閉じる</button>
+            </span>
+          </div>
+        </section>
+
+        <section class="card" id="card-happy" role="dialog" aria-labelledby="title-happy">
+          <h1 id="title-happy">そして、しあわせに</h1>
+          <p>
+            それからというもの、ジャックの家には、あたたかな光が差し込むようになりました。<br />
+            金の卵を産む牝鶏は毎日きらりと輝く卵を残し、魔法のハープは、風みたいにやさしい音を奏でます。
+          </p>
+          <p>
+            ジャックと母親は、もうお腹を空かせることはありません。けれど二人は、あの日の怖さを忘れないようにしました。<br />
+            「欲ばりすぎないこと」——それが、冒険が残してくれた大切な約束だったのです。
+          </p>
+          <p>
+            快晴の空の下、家の前で金色の鶏がことり、と鳴くたびに、ハープの音が小さく笑いました。<br />
+            こうして二人は、しあわせに暮らしたそうです。
+          </p>
+          <div class="meta">
+            <span class="hint">背景は快晴の家の前（黄金の鶏＋音楽）です。</span>
+            <span class="meta-right">
+              <button id="back5">ひとつ前へ</button>
+              <button id="toggle5">物語を閉じる</button>
+            </span>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <p class="sr" id="status" aria-live="polite"></p>
+
+    <!-- p5.js (CDN). If you need offline use, vendor p5.min.js locally. -->
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/p5.min.js"></script>
+    <script>
+      const ui = document.getElementById("ui");
+      const preludeCard = document.getElementById("card-prelude");
+      const endingCard = document.getElementById("card-ending");
+      const giantCard = document.getElementById("card-giant");
+      const harpCard = document.getElementById("card-harp");
+      const fallCard = document.getElementById("card-fall");
+      const happyCard = document.getElementById("card-happy");
+      const toEndingBtn = document.getElementById("to-ending");
+      const backBtn = document.getElementById("back");
+      const toGiantBtn = document.getElementById("to-giant");
+      const back2Btn = document.getElementById("back2");
+      const toHarpBtn = document.getElementById("to-harp");
+      const back3Btn = document.getElementById("back3");
+      const toFallBtn = document.getElementById("to-fall");
+      const back4Btn = document.getElementById("back4");
+      const toHappyBtn = document.getElementById("to-happy");
+      const back5Btn = document.getElementById("back5");
+      const toggleBtn = document.getElementById("toggle");
+      const toggleBtn2 = document.getElementById("toggle2");
+      const toggleBtn3 = document.getElementById("toggle3");
+      const toggleBtn4 = document.getElementById("toggle4");
+      const toggleBtn5 = document.getElementById("toggle5");
+      const fabBtn = document.getElementById("ui-fab");
+      const statusEl = document.getElementById("status");
+
+      let currentScene = "town"; // "town" | "sky" | "cloud" | "harp" | "fall" | "happy"
+
+      function setScene(scene) {
+        currentScene = scene;
+        preludeCard.style.display = scene === "town" ? "block" : "none";
+        endingCard.style.display = scene === "sky" ? "block" : "none";
+        giantCard.style.display = scene === "cloud" ? "block" : "none";
+        harpCard.style.display = scene === "harp" ? "block" : "none";
+        fallCard.style.display = scene === "fall" ? "block" : "none";
+        happyCard.style.display = scene === "happy" ? "block" : "none";
+        ui.style.display = "grid";
+        toggleBtn.textContent = "物語を閉じる";
+        fabBtn.textContent = "物語を閉じる";
+        statusEl.textContent =
+          scene === "town"
+            ? "はじまりの場面です"
+            : scene === "sky"
+            ? "次の場面です"
+            : scene === "cloud"
+            ? "雲の上の場面です"
+            : scene === "harp"
+            ? "屋敷の中の場面です"
+            : scene === "fall"
+            ? "落下の場面です"
+            : "ハッピーエンドです";
+      }
+
+      function setUiVisible(visible) {
+        ui.style.display = visible ? "grid" : "none";
+        toggleBtn.textContent = visible ? "物語を閉じる" : "物語を開く";
+        fabBtn.textContent = visible ? "物語を閉じる" : "物語を開く";
+        statusEl.textContent = visible ? "物語を表示しました" : "物語を非表示にしました";
+      }
+      toggleBtn.addEventListener("click", () => {
+        const visible = ui.style.display !== "none";
+        setUiVisible(!visible);
+      });
+      toggleBtn2.addEventListener("click", () => {
+        const visible = ui.style.display !== "none";
+        setUiVisible(!visible);
+      });
+      toggleBtn3.addEventListener("click", () => {
+        const visible = ui.style.display !== "none";
+        setUiVisible(!visible);
+      });
+      toggleBtn4.addEventListener("click", () => {
+        const visible = ui.style.display !== "none";
+        setUiVisible(!visible);
+      });
+      toggleBtn5.addEventListener("click", () => {
+        const visible = ui.style.display !== "none";
+        setUiVisible(!visible);
+      });
+      fabBtn.addEventListener("click", () => {
+        const visible = ui.style.display !== "none";
+        setUiVisible(!visible);
+      });
+      toEndingBtn.addEventListener("click", () => setScene("sky"));
+      backBtn.addEventListener("click", () => setScene("town"));
+      toGiantBtn.addEventListener("click", () => setScene("cloud"));
+      back2Btn.addEventListener("click", () => setScene("sky"));
+      toHarpBtn.addEventListener("click", () => setScene("harp"));
+      back3Btn.addEventListener("click", () => setScene("cloud"));
+      toFallBtn.addEventListener("click", () => setScene("fall"));
+      back4Btn.addEventListener("click", () => setScene("harp"));
+      toHappyBtn.addEventListener("click", () => setScene("happy"));
+      back5Btn.addEventListener("click", () => setScene("fall"));
+
+      // ---- p5 sketch: sky background + multiple particles rising in thin spirals
+      const sketch = (p) => {
+        const particles = [];
+        const particleCount = 110;
+        const town = { buildings: [], blockW: 0 };
+        const clouds = { puffs: [], ground: [] };
+        const interior = { herbs: [], notes: [], plankSeed: 0 };
+        const falling = { streaks: [], motes: [] };
+        const happy = { notes: [], sparkles: [] };
+
+        const skyTop = () => p.color(168, 220, 255);
+        const skyBottom = () => p.color(120, 195, 255);
+
+        function drawSkyGradient() {
+          p.noFill();
+          for (let y = 0; y < p.height; y += 2) {
+            const t = y / p.height;
+            const c = p.lerpColor(skyTop(), skyBottom(), t);
+            p.stroke(c);
+            p.line(0, y, p.width, y);
+          }
+        }
+
+        function regenTown() {
+          town.buildings = [];
+          town.blockW = Math.max(42, p.width * 0.06);
+          for (let x = -40; x < p.width + 40; x += town.blockW) {
+            town.buildings.push({
+              x,
+              h: p.random(22, 80),
+              roof: p.random(10, 22),
+            });
+          }
+        }
+
+        function drawTownScene() {
+          // warm brown gradient
+          const top = p.color(155, 45, 92);
+          const bottom = p.color(28, 55, 55);
+          p.noFill();
+          for (let y = 0; y < p.height; y += 2) {
+            const t = y / p.height;
+            const c = p.lerpColor(top, bottom, t);
+            p.stroke(c);
+            p.line(0, y, p.width, y);
+          }
+
+          // distant buildings silhouette
+          const horizonY = p.height * 0.62;
+          p.noStroke();
+          p.fill(25, 35, 32, 255);
+          p.rect(0, horizonY, p.width, p.height - horizonY);
+
+          p.fill(22, 35, 27, 255);
+          const blockW = town.blockW;
+          for (const b of town.buildings) {
+            p.rect(b.x, horizonY - b.h, blockW * 0.9, b.h);
+            // small roof
+            p.fill(22, 35, 24, 255);
+            p.triangle(
+              b.x,
+              horizonY - b.h,
+              b.x + blockW * 0.45,
+              horizonY - b.h - b.roof,
+              b.x + blockW * 0.9,
+              horizonY - b.h
+            );
+            p.fill(22, 35, 27, 255);
+          }
+
+          // street / ground texture
+          p.fill(25, 35, 22, 255);
+          p.rect(0, p.height * 0.78, p.width, p.height * 0.22);
+
+          // subtle dust motes (calm town atmosphere)
+          p.noStroke();
+          for (let i = 0; i < 40; i++) {
+            const x = (p.frameCount * 0.25 + i * 53) % (p.width + 40) - 20;
+            const y = p.height * 0.72 + Math.sin(p.frameCount * 0.01 + i) * 22 + (i % 7) * 6;
+            p.fill(40, 14, 95, 18);
+            p.circle(x, y, 2 + (i % 3));
+          }
+        }
+
+        function regenClouds() {
+          clouds.puffs = [];
+          clouds.ground = [];
+
+          const puffCount = Math.floor(Math.max(18, Math.min(46, p.width / 32)));
+          for (let i = 0; i < puffCount; i++) {
+            clouds.puffs.push({
+              x: p.random(-40, p.width + 40),
+              y: p.random(30, p.height * 0.48),
+              r: p.random(18, 55),
+              a: p.random(10, 26),
+              s: p.random(0.15, 0.5),
+            });
+          }
+
+          const groundCount = Math.floor(Math.max(22, Math.min(60, p.width / 26)));
+          for (let i = 0; i < groundCount; i++) {
+            clouds.ground.push({
+              x: p.map(i, 0, groundCount - 1, -40, p.width + 40) + p.random(-18, 18),
+              y: p.height * 0.73 + p.random(-18, 22),
+              r: p.random(40, 110),
+              a: p.random(16, 34),
+            });
+          }
+        }
+
+        function regenInterior() {
+          interior.herbs = [];
+          interior.notes = [];
+          interior.plankSeed = p.random(1000);
+
+          const herbCount = Math.floor(Math.max(10, Math.min(22, p.width / 64)));
+          for (let i = 0; i < herbCount; i++) {
+            interior.herbs.push({
+              x: p.random(p.width * 0.12, p.width * 0.88),
+              y: p.random(p.height * 0.12, p.height * 0.46),
+              len: p.random(26, 70),
+              sway: p.random(0.008, 0.02),
+              hue: p.random(90, 130),
+            });
+          }
+
+          const noteCount = 26;
+          for (let i = 0; i < noteCount; i++) {
+            interior.notes.push({
+              x: p.random(-20, p.width + 20),
+              y: p.random(p.height * 0.22, p.height * 0.7),
+              s: p.random(0.2, 0.65),
+              a: p.random(40, 110),
+              size: p.random(10, 18),
+              drift: p.random(0.25, 0.9),
+              phase: p.random(p.TAU),
+            });
+          }
+        }
+
+        function drawInteriorHarpScene() {
+          // Warm wooden interior gradient
+          const top = p.color(28, 48, 32);
+          const bottom = p.color(20, 55, 20);
+          p.noFill();
+          for (let y = 0; y < p.height; y += 2) {
+            const t = y / p.height;
+            const c = p.lerpColor(top, bottom, t);
+            p.stroke(c);
+            p.line(0, y, p.width, y);
+          }
+
+          // Wooden planks (subtle)
+          const plankW = Math.max(34, Math.min(70, p.width * 0.08));
+          p.noStroke();
+          for (let x = 0; x < p.width + plankW; x += plankW) {
+            const wob = Math.sin(x * 0.03 + interior.plankSeed) * 2.2;
+            const shade = 22 + (x / plankW) % 2 === 0 ? 5 : 0;
+            p.fill(26, 52, shade + 18, 70);
+            p.rect(x + wob, 0, plankW, p.height);
+          }
+
+          // Shelf beam
+          p.fill(24, 60, 16, 210);
+          p.rect(0, p.height * 0.5, p.width, 16);
+
+          // Hanging herbs
+          for (let i = 0; i < interior.herbs.length; i++) {
+            const h = interior.herbs[i];
+            const sway = Math.sin(p.frameCount * h.sway + i) * 6;
+            p.stroke(24, 18, 14, 140);
+            p.strokeWeight(2);
+            p.line(h.x, h.y - 14, h.x + sway * 0.15, h.y);
+            p.noStroke();
+            p.fill(h.hue, 35, 55, 180);
+            p.ellipse(h.x + sway, h.y + h.len * 0.55, 10, h.len);
+            p.fill(h.hue, 30, 65, 160);
+            p.ellipse(h.x + sway * 0.7, h.y + h.len * 0.7, 7, h.len * 0.7);
+          }
+
+          // Harp silhouette (simple, center)
+          const harpX = p.width * 0.62;
+          const harpY = p.height * 0.78;
+          p.noStroke();
+          p.fill(35, 25, 95, 28);
+          p.circle(harpX, harpY - 90, 240);
+          p.fill(32, 38, 26, 230);
+          p.beginShape();
+          p.vertex(harpX - 90, harpY);
+          p.vertex(harpX - 40, harpY - 220);
+          p.vertex(harpX + 10, harpY - 238);
+          p.vertex(harpX + 22, harpY - 40);
+          p.vertex(harpX + 58, harpY);
+          p.endShape(p.CLOSE);
+          p.fill(35, 25, 85, 200);
+          p.rect(harpX - 36, harpY - 198, 12, 180, 10);
+          // strings
+          p.stroke(45, 10, 100, 85);
+          p.strokeWeight(1);
+          for (let s = 0; s < 10; s++) {
+            const x = harpX - 30 + s * 7;
+            p.line(x, harpY - 186, x + 14, harpY - 20);
+          }
+
+          // Musical notes (sparkly particles)
+          p.noStroke();
+          for (let i = 0; i < interior.notes.length; i++) {
+            const n = interior.notes[i];
+            const x =
+              (n.x + p.frameCount * n.drift) % (p.width + 40) -
+              20 +
+              Math.sin(p.frameCount * 0.01 + n.phase) * 8;
+            const y = n.y + Math.sin(p.frameCount * 0.012 + i * 0.9) * 6;
+            p.fill(48, 22, 100, n.a * 0.25);
+            p.circle(x, y, n.size * 2.6);
+            p.fill(48, 25, 100, n.a);
+            p.circle(x, y, n.size);
+            // tiny "stem"
+            p.fill(48, 18, 100, n.a * 0.7);
+            p.rect(x + n.size * 0.3, y - n.size * 1.4, 2, n.size * 1.6, 2);
+          }
+        }
+
+        function regenFalling() {
+          falling.streaks = [];
+          falling.motes = [];
+          const streakCount = Math.floor(Math.max(80, Math.min(200, p.width / 6)));
+          for (let i = 0; i < streakCount; i++) {
+            falling.streaks.push({
+              x: p.random(-p.width * 0.2, p.width * 1.2),
+              y: p.random(-p.height, p.height),
+              len: p.random(20, 90),
+              w: p.random(1, 2.2),
+              sp: p.random(6, 18),
+              a: p.random(10, 32),
+            });
+          }
+          const moteCount = 70;
+          for (let i = 0; i < moteCount; i++) {
+            falling.motes.push({
+              x: p.random(p.width),
+              y: p.random(p.height),
+              r: p.random(1.5, 4.5),
+              sp: p.random(1.2, 3.8),
+              a: p.random(25, 65),
+              ph: p.random(p.TAU),
+            });
+          }
+        }
+
+        function drawFallingScene() {
+          // Deeper sky gradient for urgency
+          const top = p.color(205, 40, 98);
+          const bottom = p.color(210, 35, 70);
+          p.noFill();
+          for (let y = 0; y < p.height; y += 2) {
+            const t = y / p.height;
+            const c = p.lerpColor(top, bottom, t);
+            p.stroke(c);
+            p.line(0, y, p.width, y);
+          }
+
+          // Motion streaks (falling sensation)
+          p.noStroke();
+          for (const s of falling.streaks) {
+            s.y += s.sp;
+            if (s.y - s.len > p.height) {
+              s.y = -p.random(40, p.height * 0.6);
+              s.x = p.random(-p.width * 0.2, p.width * 1.2);
+            }
+            const slant = p.width * 0.08;
+            p.fill(210, 10, 100, s.a);
+            p.beginShape();
+            p.vertex(s.x, s.y);
+            p.vertex(s.x + slant, s.y + s.len);
+            p.vertex(s.x + slant + s.w, s.y + s.len);
+            p.vertex(s.x + s.w, s.y);
+            p.endShape(p.CLOSE);
+          }
+
+          // Cloud wisps passing by
+          for (let i = 0; i < falling.motes.length; i++) {
+            const m = falling.motes[i];
+            m.y += m.sp;
+            if (m.y - m.r > p.height) {
+              m.y = -m.r - p.random(10, 120);
+              m.x = p.random(p.width);
+            }
+            const sway = Math.sin(p.frameCount * 0.02 + m.ph) * 10;
+            p.fill(210, 12, 100, m.a * 0.25);
+            p.circle(m.x + sway, m.y, m.r * 5.2);
+            p.fill(210, 10, 100, m.a);
+            p.circle(m.x + sway, m.y, m.r * 2.0);
+          }
+
+          // Beanstalk silhouette + falling giant hint (far)
+          const stalkX = p.width * 0.18 + Math.sin(p.frameCount * 0.01) * 10;
+          p.stroke(120, 30, 28, 130);
+          p.strokeWeight(10);
+          p.noFill();
+          p.beginShape();
+          for (let y = -40; y <= p.height + 40; y += 40) {
+            const x = stalkX + Math.sin((y + p.frameCount * 3) * 0.02) * 18;
+            p.curveVertex(x, y);
+          }
+          p.endShape();
+
+          // tiny falling "giant"
+          const gx = p.width * 0.62 + Math.sin(p.frameCount * 0.03) * 12;
+          const gy = (p.frameCount * 4.2) % (p.height + 220) - 110;
+          p.noStroke();
+          p.fill(210, 8, 20, 120);
+          p.ellipse(gx, gy, 42, 58);
+          p.ellipse(gx - 20, gy + 10, 18, 34);
+          p.ellipse(gx + 22, gy + 12, 18, 34);
+        }
+
+        function regenHappy() {
+          happy.notes = [];
+          happy.sparkles = [];
+          const noteCount = 28;
+          for (let i = 0; i < noteCount; i++) {
+            happy.notes.push({
+              x: p.random(-40, p.width + 40),
+              y: p.random(p.height * 0.15, p.height * 0.7),
+              sp: p.random(0.4, 1.2),
+              a: p.random(55, 120),
+              size: p.random(10, 18),
+              ph: p.random(p.TAU),
+            });
+          }
+          const sparkleCount = 60;
+          for (let i = 0; i < sparkleCount; i++) {
+            happy.sparkles.push({
+              x: p.random(p.width),
+              y: p.random(p.height),
+              r: p.random(1.5, 4.8),
+              a: p.random(18, 55),
+              sp: p.random(0.3, 0.9),
+            });
+          }
+        }
+
+        function drawHappyScene() {
+          // Clear sky
+          const top = p.color(190, 35, 100);
+          const bottom = p.color(205, 25, 100);
+          p.noFill();
+          for (let y = 0; y < p.height; y += 2) {
+            const t = y / p.height;
+            const c = p.lerpColor(top, bottom, t);
+            p.stroke(c);
+            p.line(0, y, p.width, y);
+          }
+
+          // Sun glow
+          p.noStroke();
+          p.fill(55, 18, 100, 36);
+          p.circle(p.width * 0.82, p.height * 0.18, Math.min(p.width, p.height) * 0.6);
+          p.fill(55, 20, 100, 70);
+          p.circle(p.width * 0.82, p.height * 0.18, 110);
+
+          // Soft clouds
+          p.fill(210, 10, 100, 26);
+          for (let i = 0; i < 7; i++) {
+            const x = (p.frameCount * 0.25 + i * 180) % (p.width + 240) - 120;
+            const y = p.height * 0.22 + Math.sin(p.frameCount * 0.01 + i) * 12 + i * 6;
+            p.circle(x, y, 90);
+            p.circle(x + 45, y + 8, 70);
+            p.circle(x - 48, y + 10, 65);
+          }
+
+          // Ground
+          p.noStroke();
+          p.fill(110, 25, 55, 255);
+          p.rect(0, p.height * 0.72, p.width, p.height * 0.28);
+
+          // House (front)
+          const baseY = p.height * 0.72;
+          const houseW = Math.min(420, Math.max(260, p.width * 0.42));
+          const houseH = Math.min(240, Math.max(150, p.height * 0.26));
+          const houseX = p.width * 0.32 - houseW / 2;
+          const houseY = baseY - houseH;
+          p.fill(28, 18, 96, 230);
+          p.rect(houseX, houseY, houseW, houseH, 14);
+          p.fill(20, 30, 45, 230);
+          p.triangle(
+            houseX - 18,
+            houseY + 18,
+            houseX + houseW / 2,
+            houseY - 90,
+            houseX + houseW + 18,
+            houseY + 18
+          );
+          p.fill(40, 10, 100, 140);
+          p.rect(houseX + houseW * 0.14, houseY + houseH * 0.28, houseW * 0.18, houseH * 0.18, 10);
+          p.rect(houseX + houseW * 0.62, houseY + houseH * 0.28, houseW * 0.18, houseH * 0.18, 10);
+          p.fill(28, 25, 30, 240);
+          p.rect(houseX + houseW * 0.42, houseY + houseH * 0.45, houseW * 0.18, houseH * 0.55, 12);
+          p.fill(50, 35, 100, 110);
+          p.circle(houseX + houseW * 0.56, houseY + houseH * 0.73, 10);
+
+          // Golden hen (front yard)
+          const hx = p.width * 0.64;
+          const hy = baseY - 30;
+          p.fill(48, 60, 100, 45);
+          p.circle(hx, hy - 10, 170);
+          p.fill(48, 55, 100, 220);
+          p.ellipse(hx, hy, 92, 60);
+          p.ellipse(hx + 40, hy - 18, 44, 36); // head
+          p.fill(18, 70, 95, 220);
+          p.triangle(hx + 58, hy - 20, hx + 78, hy - 14, hx + 58, hy - 6); // beak
+          p.fill(0, 65, 95, 220);
+          p.circle(hx + 48, hy - 24, 10); // comb
+          p.fill(0, 0, 20, 120);
+          p.circle(hx + 50, hy - 20, 4); // eye
+          p.stroke(48, 35, 90, 180);
+          p.strokeWeight(3);
+          p.line(hx - 18, hy + 25, hx - 22, hy + 45);
+          p.line(hx + 8, hy + 25, hx + 4, hy + 45);
+          p.noStroke();
+
+          // Golden egg
+          p.fill(50, 55, 100, 220);
+          p.ellipse(hx - 70, baseY - 18, 26, 34);
+          p.fill(50, 45, 100, 80);
+          p.ellipse(hx - 76, baseY - 24, 10, 12);
+
+          // Sparkles
+          for (const s of happy.sparkles) {
+            s.y -= s.sp;
+            if (s.y < -10) {
+              s.y = p.height + p.random(10, 120);
+              s.x = p.random(p.width);
+            }
+            p.fill(50, 30, 100, s.a);
+            p.circle(s.x, s.y, s.r);
+          }
+
+          // Musical notes floating (music imagery)
+          for (let i = 0; i < happy.notes.length; i++) {
+            const n = happy.notes[i];
+            n.x += n.sp;
+            if (n.x > p.width + 40) {
+              n.x = -40;
+              n.y = p.random(p.height * 0.18, p.height * 0.68);
+            }
+            const bob = Math.sin(p.frameCount * 0.02 + n.ph) * 10;
+            const x = n.x;
+            const y = n.y + bob;
+            p.fill(48, 30, 100, n.a * 0.22);
+            p.circle(x, y, n.size * 2.4);
+            p.fill(48, 35, 100, n.a);
+            p.circle(x, y, n.size);
+            p.fill(48, 25, 100, n.a * 0.75);
+            p.rect(x + n.size * 0.3, y - n.size * 1.4, 2, n.size * 1.6, 2);
+          }
+        }
+
+        function drawCloudGiantScene() {
+          drawSkyGradient();
+
+          // airy haze
+          p.noStroke();
+          p.fill(55, 10, 100, 22);
+          p.circle(p.width * 0.78, p.height * 0.2, Math.min(p.width, p.height) * 0.55);
+
+          // floating clouds
+          for (let i = 0; i < clouds.puffs.length; i++) {
+            const c = clouds.puffs[i];
+            const x =
+              (c.x + p.frameCount * c.s) % (p.width + 80) - 40 + Math.sin(p.frameCount * 0.006 + i) * 6;
+            const y = c.y + Math.sin(p.frameCount * 0.008 + i * 1.3) * 4;
+            p.fill(210, 10, 100, c.a);
+            p.circle(x, y, c.r);
+            p.circle(x + c.r * 0.45, y + 4, c.r * 0.85);
+            p.circle(x - c.r * 0.42, y + 6, c.r * 0.78);
+          }
+
+          // cloud ground
+          for (const g of clouds.ground) {
+            p.fill(210, 10, 100, g.a);
+            p.circle(g.x, g.y, g.r);
+          }
+          p.fill(210, 12, 100, 40);
+          p.rect(0, p.height * 0.74, p.width, p.height * 0.26);
+
+          // giant house silhouette (simple, big)
+          const baseY = p.height * 0.74;
+          const houseW = Math.min(560, Math.max(320, p.width * 0.62));
+          const houseH = Math.min(320, Math.max(180, p.height * 0.34));
+          const houseX = p.width * 0.52 - houseW / 2;
+          const houseY = baseY - houseH - 28;
+
+          p.noStroke();
+          p.fill(220, 18, 26, 210);
+          p.rect(houseX, houseY, houseW, houseH, 10);
+
+          // roof
+          p.fill(220, 25, 20, 220);
+          p.triangle(
+            houseX - 24,
+            houseY + 22,
+            houseX + houseW / 2,
+            houseY - 90,
+            houseX + houseW + 24,
+            houseY + 22
+          );
+
+          // windows (warm glow)
+          const cols = 6;
+          const rows = 2;
+          const padX = houseW * 0.08;
+          const padY = houseH * 0.18;
+          const gapX = (houseW - padX * 2) / cols;
+          const gapY = (houseH - padY * 2) / rows;
+          p.fill(45, 30, 100, 130);
+          for (let ry = 0; ry < rows; ry++) {
+            for (let cx = 0; cx < cols; cx++) {
+              const wx = houseX + padX + cx * gapX + gapX * 0.2;
+              const wy = houseY + padY + ry * gapY;
+              p.rect(wx, wy, gapX * 0.6, gapY * 0.55, 6);
+            }
+          }
+
+          // door (giant scale)
+          p.fill(220, 22, 14, 240);
+          const doorW = houseW * 0.18;
+          const doorH = houseH * 0.52;
+          p.rect(houseX + houseW * 0.5 - doorW / 2, houseY + houseH - doorH, doorW, doorH, 10);
+          p.fill(45, 25, 100, 120);
+          p.circle(houseX + houseW * 0.5 + doorW * 0.25, houseY + houseH - doorH * 0.55, 8);
+        }
+
+        class SpiralParticle {
+          constructor() {
+            this.reset(true);
+          }
+
+          reset(initial = false) {
+            this.y = initial ? p.random(p.height) : p.height + p.random(20, 260);
+            this.riseSpeed = p.random(0.35, 0.9);
+            this.phase = p.random(p.TAU);
+            this.alpha = p.random(110, 210);
+            this.size = p.random(2.8, 5.8); // bigger particles
+            this.hue = p.random(190, 215); // cool-ish
+          }
+
+          step() {
+            this.y -= this.riseSpeed;
+            if (this.y < -220) this.reset(false);
+          }
+
+          draw(spiral) {
+            const time = spiral.time;
+            const angle = this.phase + this.y * spiral.twist + time * spiral.angularSpeed;
+            const cx = spiral.centerX + Math.sin(time * 0.35) * spiral.driftAmp;
+            const x = cx + Math.cos(angle) * spiral.radius;
+            const y = this.y;
+
+            // glow + core (one spiral line)
+            p.noStroke();
+            p.fill(this.hue, 20, 100, this.alpha * 0.28);
+            p.circle(x, y, this.size * 2.6);
+            p.fill(this.hue, 28, 100, this.alpha);
+            p.circle(x, y, this.size);
+          }
+        }
+
+        p.setup = () => {
+          const canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+          canvas.parent("p5-holder");
+          p.colorMode(p.HSB, 360, 100, 100, 255);
+          p.pixelDensity(Math.min(2, p.pixelDensity()));
+          for (let i = 0; i < particleCount; i++) particles.push(new SpiralParticle());
+          regenTown();
+          regenClouds();
+          regenInterior();
+          regenFalling();
+          regenHappy();
+        };
+
+        p.draw = () => {
+          if (currentScene === "town") {
+            drawTownScene();
+            return;
+          }
+          if (currentScene === "cloud") {
+            drawCloudGiantScene();
+            return;
+          }
+          if (currentScene === "harp") {
+            drawInteriorHarpScene();
+            return;
+          }
+          if (currentScene === "fall") {
+            drawFallingScene();
+            return;
+          }
+          if (currentScene === "happy") {
+            drawHappyScene();
+            return;
+          }
+
+          drawSkyGradient();
+
+          // faint sun glow
+          p.noStroke();
+          p.fill(55, 20, 100, 28);
+          p.circle(p.width * 0.82, p.height * 0.18, Math.min(p.width, p.height) * 0.55);
+
+          // particles
+          const spiral = {
+            time: p.frameCount * 0.016,
+            centerX: p.width * 0.5,
+            radius: Math.min(26, Math.max(14, p.width * 0.03)),
+            twist: 0.055, // controls how tightly the single spiral winds
+            angularSpeed: 1.05,
+            driftAmp: Math.min(40, Math.max(14, p.width * 0.035)),
+          };
+          for (const s of particles) {
+            s.step();
+            s.draw(spiral);
+          }
+        };
+
+        p.windowResized = () => {
+          p.resizeCanvas(p.windowWidth, p.windowHeight);
+          regenTown();
+          regenClouds();
+          regenInterior();
+          regenFalling();
+          regenHappy();
+        };
+      };
+
+      new p5(sketch);
+      setScene("town");
+    </script>
+  </body>
+</html>
